@@ -61,6 +61,8 @@ The physics model is provisional. The policy is a baseline heuristic, not a vali
 ## Vanta-style private dashboard (Roblox Studio)
 
 The visual/configuration port is `scripts/ProphetVantaPrivateDashboard.client.lua`.
+
+The Lua offline policy in `scripts/prophet_offline_harness.lua` now uses a tactical state machine with kickoff, attack/intercept, challenge, carry, aerial, defend, and rotation decisions. It predicts a short ball intercept, manages boost, varies throttle while turning, considers opponent-lane pressure, and emits a cooldown-limited dodge recommendation. This is an independent private-simulator implementation inspired by common car-soccer bot patterns; it is not a port of the linked bot's complete source and is not physics-validated.
 It provides Main, Bot, Visuals, Settings, and Diagnostics pages, a draggable/minimizable
 window, policy-source status, assist/display toggles, prediction-horizon settings, read-only
 control values, and a reset button. It listens to the existing
