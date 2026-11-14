@@ -7,6 +7,7 @@ An experimental car-soccer AI research project.
 - Offensive/defensive planning decisions
 - Normalized offline control adapter (throttle, steer, jump, boost, handbrake)
 - JSON-lines interface for a simulator or authorized private test harness
+- Offline regression scenario evaluator
 - Unit tests and GitHub Actions CI
 
 ## Setup
@@ -36,6 +37,14 @@ Each output line contains the planner's mode and target, plus normalized control
 - throttle: 0–1
 - steer: -1–1
 - jump, boost, handbrake: 0 or 1
+
+## Offline regression evaluator
+
+Run the included synthetic/recorded state set:
+
+    python -m prophet.evaluate < examples/regression_states.jsonl
+
+It prints a JSON report with the number of valid states, action counts, boost/jump/handbrake decisions, steering range, and invalid inputs. This checks code consistency only; it does not simulate the game's physics or prove match performance.
 
 A simulator must map these normalized controls to its own coordinate system, units, and physics. The adapter is not proof of compatibility with Bloxx League and does not connect to a live game or inject inputs.
 
