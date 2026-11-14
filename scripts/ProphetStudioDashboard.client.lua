@@ -314,11 +314,17 @@ local function update(data)
     note.Text = "Latest state received. UI displays diagnostic values only; it does not apply controls."
 end
 
+-- Wait briefly so the private demo driver can create the event even if
+-- LocalScripts start in a different order.
 local event = ReplicatedStorage:FindFirstChild("ProphetDashboardUpdate")
+if not event then
+    event = ReplicatedStorage:WaitForChild("ProphetDashboardUpdate", 10)
+end
+
 if event and event:IsA("BindableEvent") then
     event.Event:Connect(update)
 else
-    note.Text = "Create ReplicatedStorage > BindableEvent named ProphetDashboardUpdate, then fire it with Prophet state/controls data."
+    note.Text = "No simulator feed detected. Start ProphetPrivateDemo in a private Studio test place."
 end
 
 switch("Overview")
