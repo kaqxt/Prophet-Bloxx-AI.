@@ -35,6 +35,7 @@ local labels = {}
 local pages = {}
 local connections = {}
 local currentPage = "Main"
+local content
 
 local function make(className, props, parent)
     local obj = Instance.new(className)
