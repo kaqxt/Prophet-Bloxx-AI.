@@ -1,0 +1,5 @@
+{"car_position":[0,0,0],"car_velocity":[0,0,30],"ball_position":[25,0,15],"ball_velocity":[0,0,0],"opponent_goal":[0,0,100],"own_goal":[0,0,-100],"car_forward":[0,0,1],"boost":60}
+{"car_position":[0,0,0],"car_velocity":[0,0,10],"ball_position":[4,0,3],"ball_velocity":[0,0,0],"opponent_goal":[0,0,100],"own_goal":[0,0,-100],"car_forward":[0,0,1],"boost":0}
+{"car_position":[10,0,-30],"car_velocity":[0,0,90],"ball_position":[-20,0,40],"ball_velocity":[5,0,-3],"opponent_goal":[0,0,100],"own_goal":[0,0,-100],"car_forward":[1,0,0],"boost":35}
+{"car_position":[0,0,20],"car_velocity":[0,0,15],"ball_position":[0,18,35],"ball_velocity":[0,2,0],"opponent_goal":[0,0,100],"own_goal":[0,0,-100],"car_forward":[0,0,1],"boost":80}
+{"car_position":[0,0,-55],"car_velocity":[0,0,20],"ball_position":[2,0,-25],"ball_velocity":[0,0,-15],"opponent_goal":[0,0,100],"own_goal":[0,0,-100],"car_forward":[0,0,1],"boost":20}
