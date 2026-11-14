@@ -56,3 +56,29 @@ The physics model is provisional. The policy is a baseline heuristic, not a vali
 2. Build a reproducible simulator and evaluation suite.
 3. Train and compare policies against the baseline.
 4. Integrate only through an authorized offline/private test harness.
+
+
+## Vanta-style private dashboard (Roblox Studio)
+
+The visual/configuration port is `scripts/ProphetVantaPrivateDashboard.client.lua`.
+It provides Main, Bot, Visuals, Settings, and Diagnostics pages, a draggable/minimizable
+window, policy-source status, assist/display toggles, prediction-horizon settings, read-only
+control values, and a reset button. It listens to the existing
+`ReplicatedStorage.ProphetDashboardUpdate` BindableEvent.
+
+For a private Studio test place:
+
+1. Put `prophet_offline_harness.lua` in a ModuleScript named `prophet_offline_harness`.
+2. Put `ProphetVantaPrivateDashboard.client.lua` in a LocalScript under `StarterPlayerScripts`.
+3. Put `ProphetPrivateDemo.client.lua` in a second LocalScript under `StarterPlayerScripts`.
+4. Run Play in Studio. The demo feeds synthetic states to the dashboard.
+
+The dashboard only displays returned policy outputs. Its assist/visual toggles are local
+settings flags; they are not connected to live player controls or world scanning. The
+“Prophet DQN Checkpoint” option is marked unavailable until a real checkpoint/runtime is
+registered. Physics remains unvalidated by default.
+
+The Vanta code excerpt supplied during integration was not the complete clean 29,555-byte
+source file, so this is a private Studio UI/adapter inspired by the supplied components,
+not a byte-for-byte port of the original source. The original UI source should be supplied
+as a complete file before claiming exact preservation of every original callback and control.
