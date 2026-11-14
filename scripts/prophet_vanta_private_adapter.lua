@@ -69,6 +69,7 @@ function ProphetVanta:InputRead(state)
         jump = c.jump,
         boost = c.boost,
         handbrake = c.handbrake,
+        dodge = c.dodge or 0,
         mode = result.action,
         target_position = result.target_position,
         predicted_ball = result.predicted_ball,
