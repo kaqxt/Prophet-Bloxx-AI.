@@ -26,3 +26,7 @@ jobs:
         run: lua scripts/apex_prophet_smoke_test.lua
       - name: Run integration tests
         run: lua scripts/apex_prophet_integration_test.lua
+      - name: Run full offline benchmark entry point
+        run: lua scripts/run_apex_prophet_benchmark.lua
+      - name: Run synthetic tuner entry point
+        run: lua scripts/run_apex_prophet_tuning.lua
