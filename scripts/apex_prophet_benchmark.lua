@@ -153,6 +153,8 @@ function Benchmark.run(options)
                     frames=ticks,modes=mode_counts,last_mode=previous.mode,
                     last_reason=previous.reason,controls=previous.controls,
                     boost_remaining=chosen.boost,episode={goal_difference=episode.goal_difference,
+                    goals_for=episode.goals_for,goals_against=episode.goals_against,
+                    touches=episode.touches,touch_rate=episode.touch_rate,
                     average_ball_distance=episode.average_ball_distance,
                     total_reward=episode.total_reward}}
             end
