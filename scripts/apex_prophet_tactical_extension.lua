@@ -409,7 +409,9 @@ function Tactics:step(input)
         target=add(s.own_goal,mul(away,math.min(cfg.shadow_distance,distance(ball,s.own_goal)*0.55)))
         mode="SHADOW_DEFEND"
         reason="hold a goal-side position before challenging"
-    elseif ball.y>cfg.aerial_height and ballDistance<cfg.aerial_distance and s.boost>cfg.aerial_min_boost then
+    elseif ball.y>cfg.aerial_height*(1.2-0.5*clamp(cfg.aerial_bias,0,1))
+        and ballDistance<cfg.aerial_distance
+        and s.boost>cfg.aerial_min_boost*(1.25-0.5*clamp(cfg.risk_tolerance,0,1)) then
         target=intercept.position
         mode="AERIAL_INTERCEPT"
         reason="high ball with adequate boost and a reachable intercept"
@@ -420,7 +422,8 @@ function Tactics:step(input)
         target=passTarget
         mode="PASS"
         reason="passing lane is safer than shooting lane"
-    elseif ballDistance<cfg.carry_radius and not inOwnHalf and carSpeed<cfg.car_speed_max*0.72 then
+    elseif ballDistance<cfg.carry_radius and not inOwnHalf
+        and carSpeed<cfg.car_speed_max*(0.78-0.2*clamp(cfg.aggression,0,1)) then
         local behind=norm(sub(s.opponent_goal,ball))
         target=sub(ball,mul(behind,8))
         mode="CARRY_SETUP"
