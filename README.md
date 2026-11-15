@@ -84,9 +84,10 @@ The dashboard only displays returned policy outputs. Its assist/visual toggles a
 For the newer APEX tactical layer, use the parallel demo setup:
 
 1. Put `apex_prophet_tactical_extension.lua` in a ModuleScript named `apex_prophet_tactical_extension`.
-2. Put `ProphetVantaPrivateDashboard.client.lua` in `StarterPlayerScripts`.
-3. Put `ProphetApexPrivateDemo.client.lua` in `StarterPlayerScripts`.
-4. Run Play in Studio. This demo feeds synthetic states through the APEX policy and formats its decisions for the dashboard; it does not read the live world or apply controls.
+2. Put `apex_prophet_dashboard_adapter.lua` in a ModuleScript named `apex_prophet_dashboard_adapter`.
+3. Put `ProphetVantaPrivateDashboard.client.lua` in `StarterPlayerScripts`.
+4. Put `ProphetApexPrivateDemo.client.lua` in `StarterPlayerScripts`.
+5. Run Play in Studio. This demo feeds synthetic states through the APEX policy and formats its decisions for the dashboard; it does not read the live world or apply controls.
 
 The Vanta excerpt supplied during integration was not the complete clean source file, so this is a private Studio UI/adapter inspired by supplied components, not a byte-for-byte port of the original source.
 
@@ -123,7 +124,7 @@ lua scripts/run_apex_prophet_benchmark.lua
 lua scripts/run_apex_prophet_tuning.lua
 ```
 
-The integration test runs the benchmark against synthetic states for a short simulated duration. The toy simulator now applies gravity to airborne cars, treats ground dodges as airborne impulses, and resolves basic car-ball sphere collisions with bounded momentum transfer and last-touch telemetry; regression checks cover jump/dodge arcs, collision telemetry, and invalid physics/control inputs. GitHub Actions passed all 6 smoke tests, all 26 integration tests, the 9-scenario benchmark, and the 8-candidate tuner on commit `71e2e004e5f987e9d0d13447c58269ef6970f92c`. Python CI also passed (8 tests). The workflow installs Ubuntu's `lua5.4` package directly. These checks validate the synthetic/private simulator only, not live Bloxx League performance; the Roblox Studio dashboard demo has not been tested inside Studio yet. The benchmark's shooting reward now matches the policy's `SHOOT` mode, and bootstrap statistics reject empty samples and cap resampling rounds; control validation rejects NaN and infinite steering/throttle values. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. The Python controller also had a separate JSON serialization regression caused by a NumPy boolean; the policy now casts that field to a native Python `bool`, and a regression assertion was added. Full Python CI passed on the same tested code commit. Do not treat synthetic pass counts as evidence of live-game performance.
+The integration test runs the benchmark against synthetic states for a short simulated duration. The toy simulator now applies gravity to airborne cars, treats ground dodges as airborne impulses, and resolves basic car-ball sphere collisions with bounded momentum transfer and last-touch telemetry; regression checks cover jump/dodge arcs, collision telemetry, and invalid physics/control inputs. GitHub Actions passed all 6 smoke tests, all 26 integration tests, the 9-scenario benchmark, and the 8-candidate tuner on commit `71e2e004e5f987e9d0d13447c58269ef6970f92c`. Python CI also passed (8 tests). The branch now includes a pure dashboard adapter and a regression test for its output schema; the latest 27-test run is pending. These checks validate the synthetic/private simulator only, not live Bloxx League performance; the Roblox Studio dashboard demo has not been tested inside Studio yet. The benchmark's shooting reward now matches the policy's `SHOOT` mode, and bootstrap statistics reject empty samples and cap resampling rounds; control validation rejects NaN and infinite steering/throttle values. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. The Python controller also had a separate JSON serialization regression caused by a NumPy boolean; the policy now casts that field to a native Python `bool`, and a regression assertion was added. Full Python CI passed on the same tested code commit. Do not treat synthetic pass counts as evidence of live-game performance.
 
 ### Important coordinate and deployment notes
 
