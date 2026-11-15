@@ -99,7 +99,7 @@ The Lua modules are a separate experimental offline/private-simulator stack. The
 - `scripts/apex_prophet_scenarios.lua` — nine repeatable synthetic scenarios plus mirroring and validation.
 - `scripts/apex_prophet_control_adapter.lua` — clamps and smooths policy output into bounded data only. It is not an input injector.
 - `scripts/apex_prophet_evaluator.lua` — episode metrics, aggregate summaries, candidate comparison, ranking and bootstrap intervals.
-- `scripts/apex_prophet_benchmark.lua` — end-to-end offline runner with explicit axis conversion between the simulator and tactical module.
+- `scripts/apex_prophet_benchmark.lua` — end-to-end offline runner with explicit axis conversion, simulated goal counts, car-ball touch totals, and touch-rate metrics.
 - `scripts/apex_prophet_tuner.lua` — deterministic parameter sweeps across synthetic cases; its proxy score is for experiments only, not real-game win-rate prediction.
 - `scripts/apex_prophet_smoke_test.lua` — tactical-layer synthetic smoke tests.
 - `scripts/apex_prophet_integration_test.lua` — module integration/regression checks.
