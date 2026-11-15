@@ -73,6 +73,20 @@ test("simulator advances ball deterministically",function()
     eq(a.state.ball.position.x,b.state.ball.position.x)
     eq(a.tick,30)
 end)
+test("car-ball contact transfers momentum and records last touch",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="striker",position={x=-3,y=0,z=0},
+        velocity={x=20,y=0,z=0},yaw=0,boost=0})
+    sim:set_ball({x=0,y=0,z=2.1},{x=0,y=0,z=0})
+    sim:step({},1/60)
+    truth(sim.state.ball.velocity.x>0,"car contact should move the ball forward")
+    eq(sim.state.match.last_touch,"striker")
+    local found=false
+    for _,event in ipairs(sim.events) do
+        if event.kind=="car_ball_touch" then found=true end
+    end
+    truth(found,"touch event should be recorded")
+end)
 test("simulator clamps invalid control magnitudes",function()
     local sim=Simulator.new(Config)
     local c=sim:add_car({id="test",position={x=0,y=0,z=0},yaw=0,boost=100})
