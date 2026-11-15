@@ -115,7 +115,7 @@ lua scripts/run_apex_prophet_benchmark.lua
 lua scripts/run_apex_prophet_tuning.lua
 ```
 
-The integration test runs the benchmark against synthetic states for a short simulated duration. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. GitHub Actions has successfully executed the smoke and integration tests. The Python controller also had a separate JSON serialization regression caused by a NumPy boolean; the policy now casts that field to a native Python `bool`, and a regression assertion was added. The controller tests were checked locally against the fetched source, but a fresh full Python CI result for the latest commit is not yet confirmed. Do not treat synthetic pass counts as evidence of live-game performance.
+The integration test runs the benchmark against synthetic states for a short simulated duration. The toy simulator now applies gravity to airborne cars and treats ground dodges as airborne impulses; regression checks cover jump/dodge ascent, descent, and landing. These new checks are awaiting a fresh GitHub Actions result. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. GitHub Actions has successfully executed the smoke and integration tests. The Python controller also had a separate JSON serialization regression caused by a NumPy boolean; the policy now casts that field to a native Python `bool`, and a regression assertion was added. The controller tests were checked locally against the fetched source, but a fresh full Python CI result for the latest commit is not yet confirmed. Do not treat synthetic pass counts as evidence of live-game performance.
 
 ### Important coordinate and deployment notes
 
