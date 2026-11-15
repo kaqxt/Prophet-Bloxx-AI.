@@ -7,6 +7,7 @@ local Evaluator=require("apex_prophet_evaluator")
 local Adapter=require("apex_prophet_control_adapter")
 local Benchmark=require("apex_prophet_benchmark")
 local Tuner=require("apex_prophet_tuner")
+local Tactics=require("apex_prophet_tactical_extension")
 local tests,passed=0,0
 local function test(name,fn)
     tests=tests+1
@@ -176,6 +177,20 @@ test("bootstrap mean is deterministic and rejects empty samples",function()
     eq(a.high,b.high)
     local ok=pcall(function() Evaluator.bootstrap_mean({},20,42) end)
     truth(not ok,"empty bootstrap sample should be rejected")
+end)
+test("aerial bias changes borderline aerial decisions",function()
+    local s={
+        car_position={x=0,y=2,z=20},car_velocity={x=0,y=0,z=-10},
+        car_forward={x=0,y=0,z=-1},car_up={x=0,y=1,z=0},
+        ball_position={x=10,y=14,z=0},ball_velocity={x=0,y=0,z=-3},
+        own_goal={x=0,y=0,z=220},opponent_goal={x=0,y=0,z=-220},
+        boost=80,dt=1/60,grounded=true,jump_available=true,dodge_available=true,
+        teammates={},opponents={}
+    }
+    local conservative=Tactics.new({aerial_bias=0.3}):step(s)
+    local aggressive=Tactics.new({aerial_bias=0.8}):step(s)
+    truth(conservative.mode~="AERIAL_INTERCEPT","low aerial bias should reject borderline aerial")
+    eq(aggressive.mode,"AERIAL_INTERCEPT")
 end)
 test("benchmark runs all synthetic scenarios",function()
     local report=Benchmark.run({duration=0.12})
