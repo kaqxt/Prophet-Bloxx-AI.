@@ -63,7 +63,7 @@ function Tuner.expand(base,candidates)
             if section=="tactics" then tactics[field]=value
             elseif section=="simulator" then
                 if type(sim[section])~="table" then sim[section]={} end
-                sim[section][field]=value
+                sim[field]=value
             elseif section=="policy" then
                 if type(config.policy)~="table" then config.policy={} end
                 config.policy[field]=value
@@ -80,12 +80,16 @@ function Tuner.run(options)
     options=options or {}
     local base=options.config or Config
     local candidates=options.candidates or Tuner.default_candidates()
+    local valid,problems=Tuner.validate_candidates(candidates)
+    assert(valid,table.concat(problems,"; "))
+    local expanded=Tuner.expand(base,candidates)
     local scenarios=options.scenarios or Scenarios.all()
-    local max_trials=math.max(1,math.min(options.max_trials or #candidates,100))
+    local max_trials=math.max(1,math.min(options.max_trials or #expanded,100))
     local results={}
-    for index,candidate in ipairs(candidates) do
+    for index,candidate in ipairs(expanded) do
         if index>max_trials then break end
-        local simConfig=Config.merge(base,candidate.simulator or {})
+        local simConfig=Config.merge(base,candidate.config or {})
+        simConfig=Config.merge(simConfig,candidate.simulator or {})
         local report=Benchmark.run({
             config=simConfig,
             scenarios=scenarios,
