@@ -97,7 +97,19 @@ function Benchmark.run(options)
             if not chosen then
                 report.failures[#report.failures+1]={name=scenario.name,errors={"no controlled team car"}}
             else
-                local bot=Tactics.new(options.tactics_config)
+                local tacticsConfig=options.tactics_config or {
+                    field_half_width=config.field.half_width,
+                    field_half_length=config.field.half_length,
+                    goal_half_width=config.field.goal_half_width,
+                    goal_height=config.field.goal_height,
+                    gravity=config.ball.gravity,
+                    ball_radius=config.ball.radius,
+                    wall_restitution=config.field.wall_restitution,
+                    floor_restitution=config.field.floor_restitution,
+                    car_speed_max=config.car.max_speed,
+                    car_accel=config.car.acceleration,
+                }
+                local bot=Tactics.new(tacticsConfig)
                 local adapter=Adapter.new(config)
                 aggregate:start_episode({scenario=scenario.name,car_id=chosen.id})
                 local previous
