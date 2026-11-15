@@ -54,8 +54,10 @@ function Adapter:validate(action)
     local errors={}
     if type(action)~="table" then return false,{"action must be a table"} end
     for _,key in ipairs({"steer","throttle"}) do
-        if type(action[key])~="number" or action[key]<-1 or action[key]>1 then
-            errors[#errors+1]=key.." must be numeric in [-1,1]"
+        local value=action[key]
+        if type(value)~="number" or value~=value or value==math.huge or value==-math.huge
+            or value < -1 or value > 1 then
+            errors[#errors+1]=key.." must be finite and in [-1,1]"
         end
     end
     for _,key in ipairs({"boost","jump","dodge","handbrake"}) do
