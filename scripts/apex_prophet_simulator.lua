@@ -218,6 +218,47 @@ function Simulator:step_car(car, action, dt)
         jump=action.jump==true,dodge=action.dodge==true}
 end
 
+function Simulator:resolve_car_ball_collisions()
+    local ball = self.state.ball
+    local carConfig = self.car_config
+    local ballRadius = ball.radius or self.ball_config.radius or 2.1
+    local carRadius = carConfig.radius or 2.2
+    local combinedRadius = ballRadius + carRadius
+    for _, car in ipairs(self.state.cars) do
+        if not car.demoed then
+            local delta = {
+                x = ball.position.x - car.position.x,
+                y = ball.position.y - car.position.y,
+                z = ball.position.z - car.position.z,
+            }
+            local distance = magnitude(delta)
+            if distance < combinedRadius then
+                local normal = distance > 1e-8 and scale(delta, 1 / distance) or vec(1, 0, 0)
+                -- Separate overlapping spheres before applying an impulse so the
+                -- same contact cannot accumulate unbounded force each frame.
+                ball.position = add(car.position, scale(normal, combinedRadius + 0.001))
+                local relativeVelocity = {
+                    x = ball.velocity.x - car.velocity.x,
+                    y = ball.velocity.y - car.velocity.y,
+                    z = ball.velocity.z - car.velocity.z,
+                }
+                local closingSpeed = dot(relativeVelocity, normal)
+                if closingSpeed < 0 then
+                    local restitution = 0.45
+                    ball.velocity = add(ball.velocity,
+                        scale(normal, -(1 + restitution) * closingSpeed))
+                    ball.velocity = limit(ball.velocity, self.ball_config.max_speed or 150)
+                    self.state.match.last_touch = car.id
+                    self:record_event("car_ball_touch", {
+                        car_id = car.id,
+                        impulse = -(1 + restitution) * closingSpeed,
+                    })
+                end
+            end
+        end
+    end
+end
+
 function Simulator:step(actions, dt)
     dt = dt or self.dt
     assert(type(dt) == "number" and dt > 0 and dt <= 0.25, "dt must be in (0, 0.25]")
@@ -226,6 +267,7 @@ function Simulator:step(actions, dt)
     for _, car in ipairs(self.state.cars) do
         self:step_car(car, actions[car.id] or actions.default or {}, dt)
     end
+    self:resolve_car_ball_collisions()
     for _, pad in ipairs(self.state.boost_pads) do
         if not pad.active then
             pad.timer = math.max(0, (pad.timer or 0)-dt)
