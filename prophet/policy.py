@@ -70,7 +70,7 @@ class ProphetPolicy:
             "direction": direction.tolist(),
             "distance_to_ball": float(distance),
             "travel_time": travel_time,
-            "boost_recommended": (
+            "boost_recommended": bool(
                 distance > 45 and speed < 100
                 and state.boost > 0
             ),
