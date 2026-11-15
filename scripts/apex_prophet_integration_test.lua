@@ -8,6 +8,7 @@ local Adapter=require("apex_prophet_control_adapter")
 local Benchmark=require("apex_prophet_benchmark")
 local Tuner=require("apex_prophet_tuner")
 local Tactics=require("apex_prophet_tactical_extension")
+local DashboardAdapter=require("apex_prophet_dashboard_adapter")
 local tests,passed=0,0
 local function test(name,fn)
     tests=tests+1
@@ -191,6 +192,25 @@ test("bootstrap mean is deterministic and rejects empty samples",function()
     eq(a.high,b.high)
     local ok=pcall(function() Evaluator.bootstrap_mean({},20,42) end)
     truth(not ok,"empty bootstrap sample should be rejected")
+end)
+test("dashboard adapter maps policy outputs to display schema",function()
+    local decision={
+        tick=4,mode="INTERCEPT",target={x=1,y=2,z=3},
+        intercept={position={x=4,y=5,z=6},time=0.4},
+        diagnostics={ball_distance=30,steering_angle=math.pi/2,car_speed=25},
+        controls={throttle=0.7,steer=1,boost=true,jump=false,handbrake=false,dodge=true}
+    }
+    local view=DashboardAdapter.format(decision,{boost=55},9)
+    eq(view.tick,9)
+    eq(view.mode,"INTERCEPT")
+    eq(view.travel_time,0.4)
+    eq(view.controls.boost,1)
+    eq(view.controls.dodge,1)
+    eq(view.controls.jump,0)
+    eq(view.diagnostics.physics_validated,false)
+    local err=DashboardAdapter.error("sample failure",10)
+    eq(err.connected,false)
+    eq(err.mode,"ERROR")
 end)
 test("steering sign points toward a lateral target",function()
     local s={
