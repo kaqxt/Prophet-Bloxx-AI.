@@ -194,8 +194,14 @@ function Simulator:step_car(car, action, dt)
     if action.dodge and car.dodge_cooldown <= 0 then
         car.velocity = add(car.velocity, scale(forward, c.dodge_impulse))
         car.velocity.z = math.max(car.velocity.z, c.jump_impulse*0.45)
+        car.on_ground = false
         car.dodge_cooldown = 1.1
         self:record_event("dodge", {car_id=car.id})
+    end
+    -- Apply vertical gravity after jump/dodge impulses. Without this, airborne
+    -- cars keep rising forever in the toy simulator and jump tuning is meaningless.
+    if not car.on_ground then
+        car.velocity.z = car.velocity.z - (c.gravity or self.ball_config.gravity or 42) * dt
     end
     local max_speed = boost and c.boost_speed or c.max_speed
     car.velocity = limit(car.velocity, max_speed)
