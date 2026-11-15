@@ -99,11 +99,17 @@ local function angleBetween(a,b)
     return math.acos(clamp(dot(aa,bb),-1,1))
 end
 
+local function atan2(y,x)
+    -- Roblox Luau exposes math.atan2; Lua 5.3+ also supports math.atan(y, x).
+    if math.atan2 then return math.atan2(y,x) end
+    return math.atan(y,x)
+end
+
 local function signedAngle(a,b)
     local aa, bb = norm(flat(a)), norm(flat(b))
     if len(aa) < 1e-7 or len(bb) < 1e-7 then return 0 end
     local c = aa.z*bb.x-aa.x*bb.z
-    return math.atan(c, clamp(dot(aa,bb),-1,1))
+    return atan2(c, clamp(dot(aa,bb),-1,1))
 end
 
 local function predictBall(state, t, cfg)
