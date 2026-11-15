@@ -226,6 +226,19 @@ test("benchmark runs all synthetic scenarios",function()
     truth(report.summary.episodes>=8)
     truth(type(Benchmark.format(report))=="string")
 end)
+test("benchmark reports goals scored by the controlled team",function()
+    local scenario={
+        name="blue_goal_scoring",
+        ball={position={x=95,y=0,z=3},velocity={x=50,y=0,z=0}},
+        cars={{id="blue_test",team="blue",position={x=0,y=40,z=0},
+            velocity={x=0,y=0,z=0},yaw=0,boost=0,on_ground=true}},
+        boost_pads={},metadata={tags={"goal"},expected={}}
+    }
+    local report=Benchmark.run({duration=0.5,scenarios={scenario},team="blue"})
+    eq(report.failed,0)
+    eq(report.results[1].episode.goal_difference,1)
+    eq(report.summary.goal_difference,1)
+end)
 test("tuner validates candidates and ranks a short sweep",function()
     local candidates=Tuner.default_candidates()
     local ok,errors=Tuner.validate_candidates(candidates)
