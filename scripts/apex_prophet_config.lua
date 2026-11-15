@@ -93,15 +93,26 @@ end
 function Config.validate(config)
     local errors = {}
     config = config or Config
+    local function finiteNumber(value)
+        return type(value) == "number" and value == value
+            and value ~= math.huge and value ~= -math.huge
+    end
     local function positive(path, value)
-        if type(value) ~= "number" or value <= 0 then
-            errors[#errors + 1] = path .. " must be a positive number"
+        if not finiteNumber(value) or value <= 0 then
+            errors[#errors + 1] = path .. " must be a finite positive number"
+        end
+    end
+    local function bounded(path, value, low, high)
+        if not finiteNumber(value) or value < low or value > high then
+            errors[#errors + 1] = path .. " must be finite and in [" .. low .. ", " .. high .. "]"
         end
     end
     positive("fixed_dt", config.fixed_dt)
     positive("max_simulation_time", config.max_simulation_time)
     positive("field.half_length", config.field and config.field.half_length)
     positive("field.half_width", config.field and config.field.half_width)
+    bounded("field.wall_restitution", config.field and config.field.wall_restitution, 0, 1)
+    bounded("field.floor_restitution", config.field and config.field.floor_restitution, 0, 1)
     positive("ball.radius", config.ball and config.ball.radius)
     positive("ball.max_speed", config.ball and config.ball.max_speed)
     positive("car.max_speed", config.car and config.car.max_speed)
