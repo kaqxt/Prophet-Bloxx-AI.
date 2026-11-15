@@ -162,7 +162,9 @@ function Evaluator.validate_metrics(metrics)
     return #issues==0,issues
 end
 function Evaluator.bootstrap_mean(values, rounds, seed)
-    rounds=rounds or 500
+    assert(type(values)=="table","values must be a table")
+    assert(#values>0,"values must not be empty")
+    rounds=math.max(1,math.min(math.floor(tonumber(rounds) or 500),10000))
     local state=seed or 981723
     local function random_index(n)
         state=(state*48271)%2147483647
