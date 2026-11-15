@@ -114,6 +114,10 @@ function Benchmark.run(options)
                 end
                 local bot=Tactics.new(tacticsConfig)
                 local adapter=Adapter.new(config)
+                local controlledTeam=options.team or "blue"
+                local opposingTeam=controlledTeam=="blue" and "orange" or "blue"
+                local goalsForBefore=simulator.score[controlledTeam] or 0
+                local goalsAgainstBefore=simulator.score[opposingTeam] or 0
                 aggregate:start_episode({scenario=scenario.name,car_id=chosen.id})
                 local previous
                 local duration=options.duration or 1.2
@@ -133,7 +137,18 @@ function Benchmark.run(options)
                         boost=normalized.boost,jump=normalized.jump,dodge=normalized.dodge}
                     simulator:step(actions,config.fixed_dt)
                 end
-                local episode=aggregate:finish_episode({duration=ticks*config.fixed_dt})
+                local touches=0
+                for _,event in ipairs(simulator.events) do
+                    if event.kind=="car_ball_touch" and event.data and event.data.car_id==chosen.id then
+                        touches=touches+1
+                    end
+                end
+                local episode=aggregate:finish_episode({
+                    duration=ticks*config.fixed_dt,
+                    goals_for=(simulator.score[controlledTeam] or 0)-goalsForBefore,
+                    goals_against=(simulator.score[opposingTeam] or 0)-goalsAgainstBefore,
+                    touches=touches,
+                })
                 report.results[#report.results+1]={name=scenario.name,car_id=chosen.id,
                     frames=ticks,modes=mode_counts,last_mode=previous.mode,
                     last_reason=previous.reason,controls=previous.controls,
