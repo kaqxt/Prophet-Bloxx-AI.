@@ -62,7 +62,6 @@ function Tuner.expand(base,candidates)
             local section,field=string.match(path,"^([^%.]+)%.(.+)$")
             if section=="tactics" then tactics[field]=value
             elseif section=="simulator" then
-                if type(sim[section])~="table" then sim[section]={} end
                 sim[field]=value
             elseif section=="policy" then
                 if type(config.policy)~="table" then config.policy={} end
