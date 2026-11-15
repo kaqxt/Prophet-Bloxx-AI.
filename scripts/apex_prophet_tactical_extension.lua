@@ -475,6 +475,15 @@ function Tactics:step(input)
         throttle=clamp(math.cos(steeringAngle),-0.35,1)
     end
 
+    -- Suggest a forward dodge on a clean, ground-level intercept/shot approach.
+    -- This is only a policy value; the private simulator decides whether it can execute.
+    if not actions.dodge and s.grounded and s.dodge_available and self.dodge_timer<=0
+        and (mode=="INTERCEPT" or mode=="SHOOT" or mode=="EMERGENCY_CLEAR")
+        and ballDistance>=cfg.dodge_min_distance and ballDistance<=cfg.dodge_max_distance
+        and carSpeed<cfg.car_speed_max*0.8 and math.abs(steeringAngle)<0.35 then
+        actions.dodge=true
+    end
+
     -- Dodge is a suggestion, never a direct input. Require a stable, close approach.
     if actions.dodge and (not s.grounded or self.dodge_timer>0 or ballDistance<cfg.dodge_min_distance
         or ballDistance>cfg.dodge_max_distance or math.abs(steeringAngle)>0.9) then
