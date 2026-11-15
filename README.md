@@ -87,3 +87,35 @@ The Vanta excerpt supplied during integration was not the complete clean source 
 The supplied `Blox Spanish League` repository is a Discord bot and HTTP match-event relay; its `index.js` does not implement a car-soccer agent or expose game physics. The public `EnderDevelopment/turbo-soccer-bot` repository has `SSLBotCore.lua`, `SSLFreestyle.lua`, and `SSLBotConfig.lua`; its stated interface is a Roblox ModuleScript that reads CFrames/Vector3s and produces desired controls. I used it only as a feature checklist for independent private-simulator logic, not as code to inject into public matches.
 
 Searches also surfaced executor-based public-match automation loaders for Turbo Soccer. Those are not appropriate dependencies for this private simulator, can change remotely, and do not establish compatibility with Bloxx League. The implementation here intentionally does not load remote scripts or reuse executor hooks.
+
+
+## APEX × Prophet offline stack
+
+The Lua modules are a separate experimental offline/private-simulator stack. They do not read a public match, inspect live game modules, send remote events, or inject controls.
+
+- `scripts/apex_prophet_config.lua` — validated defaults for the simplified field, ball, car, policy and scoring.
+- `scripts/apex_prophet_tactical_extension.lua` — tactical decision layer: predicted trajectory, intercept selection, goal-line threat, shot/pass lane evaluation, teammate spacing, boost reserve and recovery suggestions.
+- `scripts/apex_prophet_simulator.lua` — deterministic fixed-step toy simulator with simplified ball bounces, car acceleration, boost, jump/dodge suggestions, pad respawns and goal events.
+- `scripts/apex_prophet_scenarios.lua` — nine repeatable synthetic scenarios plus mirroring and validation.
+- `scripts/apex_prophet_control_adapter.lua` — clamps and smooths policy output into bounded data only. It is not an input injector.
+- `scripts/apex_prophet_evaluator.lua` — episode metrics, aggregate summaries, candidate comparison, ranking and bootstrap intervals.
+- `scripts/apex_prophet_benchmark.lua` — end-to-end offline runner with explicit axis conversion between the simulator and tactical module.
+- `scripts/apex_prophet_smoke_test.lua` — tactical-layer synthetic smoke tests.
+- `scripts/apex_prophet_integration_test.lua` — module integration/regression checks.
+
+### Run the Lua checks
+
+From the repository root, using Lua 5.1 or newer:
+
+```sh
+lua scripts/apex_prophet_smoke_test.lua
+lua scripts/apex_prophet_integration_test.lua
+```
+
+The integration test runs the benchmark against synthetic states for a short simulated duration. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. The current environment used to author these changes did not have a Lua interpreter available, so these Lua tests are committed but have not been executed here. Do not treat synthetic pass counts as evidence of live-game performance.
+
+### Important coordinate and deployment notes
+
+The toy simulator uses x/y as the floor plane and z as up. The tactical layer uses x/z as the floor plane and y as up. The benchmark contains an explicit coordinate conversion. If you connect a private Studio simulator, implement and test a separate adapter for its actual units, axes, car orientation, boost-pad layout, collision behavior and goal geometry before evaluating policy quality.
+
+The Lua and Python stacks are independent at present; this is not a production-ready integrated game client. Keep experiments in a private Studio place or offline simulator with permission. Do not paste tokens, session cookies, executor loaders or private credentials into source files.
