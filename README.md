@@ -48,25 +48,28 @@ It prints a JSON report with the number of valid states, action counts, boost/ju
 
 A simulator must map these normalized controls to its own coordinate system, units, and physics. The adapter is not proof of compatibility with Bloxx League and does not connect to a live game or inject inputs.
 
+## APEX × Prophet tactical extension
+
+New files on branch `prophet/offline-bot-core`:
+
+- `scripts/apex_prophet_tactical_extension.lua` — standalone private-simulator tactical layer. It computes a bounce-aware predicted path, candidate intercept, own-goal threat, shot lane, optional pass target, teammate spacing, recovery recommendation, boost reserve, and normalized driving suggestions. It uses plain Lua tables and contains no executor APIs, live-game hooks, remote calls, or input injection.
+- `scripts/apex_prophet_smoke_test.lua` — six synthetic smoke tests for baseline decisions, goal-line threat detection, high-ball handling, teammate rotation, low-boost conservation, and repeatability.
+
+Run the Lua smoke tests from the repository root with a Lua 5.1+ interpreter:
+
+    lua scripts/apex_prophet_smoke_test.lua
+
+These tests have been added but have **not** been executed in this environment. Treat the new extension as unvalidated until they pass and the planner is calibrated against a private simulator.
+
 ## Current limitations
-The physics model is provisional. The policy is a baseline heuristic, not a validated reproduction of Rocket League Prophet. It has not been calibrated against Bloxx League telemetry or evaluated in the target game's physics.
 
-## Next milestones
-1. Calibrate the physics model using permitted recorded observations.
-2. Build a reproducible simulator and evaluation suite.
-3. Train and compare policies against the baseline.
-4. Integrate only through an authorized offline/private test harness.
+The physics model is provisional. The policy is a heuristic, not a validated reproduction of Rocket League Prophet or an implementation of a trained DQN. It has not been calibrated against Bloxx League telemetry or evaluated in the target game's physics. It is designed for a private Studio experience or offline simulator.
 
-
-## Vanta-style private dashboard (Roblox Studio)
+## Private Studio dashboard
 
 The visual/configuration port is `scripts/ProphetVantaPrivateDashboard.client.lua`.
 
-The Lua offline policy in `scripts/prophet_offline_harness.lua` now uses a tactical state machine with kickoff, attack/intercept, challenge, carry, aerial, defend, and rotation decisions. It predicts a short ball intercept, manages boost, varies throttle while turning, considers opponent-lane pressure, and emits a cooldown-limited dodge recommendation. This is an independent private-simulator implementation inspired by common car-soccer bot patterns; it is not a port of the linked bot's complete source and is not physics-validated.
-It provides Main, Bot, Visuals, Settings, and Diagnostics pages, a draggable/minimizable
-window, policy-source status, assist/display toggles, prediction-horizon settings, read-only
-control values, and a reset button. It listens to the existing
-`ReplicatedStorage.ProphetDashboardUpdate` BindableEvent.
+The Lua offline policy in `scripts/prophet_offline_harness.lua` uses a tactical state machine with kickoff, attack/intercept, challenge, carry, aerial, defend, and rotation decisions. It predicts a short ball intercept, manages boost, varies throttle while turning, considers opponent-lane pressure, and emits a cooldown-limited dodge recommendation. This is an independent private-simulator implementation inspired by general car-soccer bot patterns; it is not a port of the linked bot's complete source and is not physics-validated.
 
 For a private Studio test place:
 
@@ -75,12 +78,12 @@ For a private Studio test place:
 3. Put `ProphetPrivateDemo.client.lua` in a second LocalScript under `StarterPlayerScripts`.
 4. Run Play in Studio. The demo feeds synthetic states to the dashboard.
 
-The dashboard only displays returned policy outputs. Its assist/visual toggles are local
-settings flags; they are not connected to live player controls or world scanning. The
-“Prophet DQN Checkpoint” option is marked unavailable until a real checkpoint/runtime is
-registered. Physics remains unvalidated by default.
+The dashboard only displays returned policy outputs. Its assist/visual toggles are local settings flags; they are not connected to live player controls or world scanning. The “Prophet DQN Checkpoint” option is marked unavailable until a real checkpoint/runtime is registered.
 
-The Vanta code excerpt supplied during integration was not the complete clean 29,555-byte
-source file, so this is a private Studio UI/adapter inspired by the supplied components,
-not a byte-for-byte port of the original source. The original UI source should be supplied
-as a complete file before claiming exact preservation of every original callback and control.
+The Vanta excerpt supplied during integration was not the complete clean source file, so this is a private Studio UI/adapter inspired by supplied components, not a byte-for-byte port of the original source.
+
+## Source research notes
+
+The supplied `Blox Spanish League` repository is a Discord bot and HTTP match-event relay; its `index.js` does not implement a car-soccer agent or expose game physics. The public `EnderDevelopment/turbo-soccer-bot` repository has `SSLBotCore.lua`, `SSLFreestyle.lua`, and `SSLBotConfig.lua`; its stated interface is a Roblox ModuleScript that reads CFrames/Vector3s and produces desired controls. I used it only as a feature checklist for independent private-simulator logic, not as code to inject into public matches.
+
+Searches also surfaced executor-based public-match automation loaders for Turbo Soccer. Those are not appropriate dependencies for this private simulator, can change remotely, and do not establish compatibility with Bloxx League. The implementation here intentionally does not load remote scripts or reuse executor hooks.
