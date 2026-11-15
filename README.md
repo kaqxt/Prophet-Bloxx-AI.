@@ -80,6 +80,14 @@ For a private Studio test place:
 
 The dashboard only displays returned policy outputs. Its assist/visual toggles are local settings flags; they are not connected to live player controls or world scanning. The “Prophet DQN Checkpoint” option is marked unavailable until a real checkpoint/runtime is registered.
 
+
+For the newer APEX tactical layer, use the parallel demo setup:
+
+1. Put `apex_prophet_tactical_extension.lua` in a ModuleScript named `apex_prophet_tactical_extension`.
+2. Put `ProphetVantaPrivateDashboard.client.lua` in `StarterPlayerScripts`.
+3. Put `ProphetApexPrivateDemo.client.lua` in `StarterPlayerScripts`.
+4. Run Play in Studio. This demo feeds synthetic states through the APEX policy and formats its decisions for the dashboard; it does not read the live world or apply controls.
+
 The Vanta excerpt supplied during integration was not the complete clean source file, so this is a private Studio UI/adapter inspired by supplied components, not a byte-for-byte port of the original source.
 
 ## Source research notes
