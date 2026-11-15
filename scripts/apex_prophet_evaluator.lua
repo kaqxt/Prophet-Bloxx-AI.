@@ -185,8 +185,12 @@ function Evaluator.action_sanity(action)
     action=action or {}
     local issues={}
     for _,key in ipairs({"steer","throttle"}) do
-        if type(action[key])~="number" then issues[#issues+1]=key.." must be numeric"
-        elseif action[key]<-1 or action[key]>1 then issues[#issues+1]=key.." out of range" end
+        local value=action[key]
+        if type(value)~="number" or value~=value or value==math.huge or value==-math.huge then
+            issues[#issues+1]=key.." must be finite numeric"
+        elseif value < -1 or value > 1 then
+            issues[#issues+1]=key.." out of range"
+        end
     end
     if action.boost~=nil and type(action.boost)~="boolean" then issues[#issues+1]="boost must be boolean" end
     return #issues==0,issues
