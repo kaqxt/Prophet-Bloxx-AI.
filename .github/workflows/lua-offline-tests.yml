@@ -1,0 +1,28 @@
+name: Lua offline stack tests
+
+on:
+  push:
+    branches: ["prophet/offline-bot-core"]
+    paths:
+      - "scripts/apex_prophet_*.lua"
+      - ".github/workflows/lua-offline-tests.yml"
+  pull_request:
+    paths:
+      - "scripts/apex_prophet_*.lua"
+      - ".github/workflows/lua-offline-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  lua-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: "5.4"
+      - name: Run tactical smoke tests
+        run: lua scripts/apex_prophet_smoke_test.lua
+      - name: Run integration tests
+        run: lua scripts/apex_prophet_integration_test.lua
