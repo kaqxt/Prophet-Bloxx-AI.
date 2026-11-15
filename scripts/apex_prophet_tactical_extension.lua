@@ -533,8 +533,12 @@ function Tactics:step(input)
         },
     }
     self:record(mode,intercept.score,s)
-    self.last_mode=mode
-    self.mode_age=(mode==self.last_mode) and (self.mode_age+s.dt) or 0
+    if mode == self.last_mode then
+        self.mode_age = self.mode_age + s.dt
+    else
+        self.last_mode = mode
+        self.mode_age = 0
+    end
     self.previous_target=target
     self.last_ball=ball
     return decision
