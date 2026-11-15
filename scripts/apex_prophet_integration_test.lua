@@ -192,6 +192,19 @@ test("bootstrap mean is deterministic and rejects empty samples",function()
     local ok=pcall(function() Evaluator.bootstrap_mean({},20,42) end)
     truth(not ok,"empty bootstrap sample should be rejected")
 end)
+test("aligned ground intercept can recommend a dodge",function()
+    local s={
+        car_position={x=0,y=2,z=35},car_velocity={x=0,y=0,z=-20},
+        car_forward={x=0,y=0,z=-1},car_up={x=0,y=1,z=0},
+        ball_position={x=0,y=2,z=0},ball_velocity={x=0,y=0,z=0},
+        own_goal={x=0,y=0,z=220},opponent_goal={x=0,y=0,z=-220},
+        boost=50,dt=1/60,grounded=true,jump_available=true,dodge_available=true,
+        teammates={},opponents={}
+    }
+    local decision=Tactics.new():step(s)
+    eq(decision.mode,"INTERCEPT")
+    eq(decision.controls.dodge,true)
+end)
 test("aerial bias changes borderline aerial decisions",function()
     local s={
         car_position={x=0,y=2,z=20},car_velocity={x=0,y=0,z=-10},
