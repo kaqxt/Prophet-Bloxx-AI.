@@ -240,6 +240,8 @@ test("benchmark reports goals scored by the controlled team",function()
     eq(report.results[1].episode.goals_for,1)
     eq(report.results[1].episode.goals_against,0)
     eq(report.summary.goal_difference,1)
+    truth(Benchmark.format(report):find("score +1",1,true)~=nil,
+        "formatted report should include score")
 end)
 test("tuner validates candidates and ranks a short sweep",function()
     local candidates=Tuner.default_candidates()
