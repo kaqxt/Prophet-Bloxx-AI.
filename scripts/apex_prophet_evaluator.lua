@@ -56,6 +56,10 @@ function Evaluator:finish_episode(result)
     result=result or {}
     e.goals_for=result.goals_for or e.goals_for
     e.goals_against=result.goals_against or e.goals_against
+    for _,key in ipairs({"touches","shots","shots_on_target","intercepts","missed_intercepts",
+        "boost_used","boost_collected","collision_count","own_goal_risks","action_changes","stale_actions"}) do
+        if type(result[key])=="number" then e[key]=e[key]+result[key] end
+    end
     e.duration=result.duration or e.frames/60
     e.goal_difference=e.goals_for-e.goals_against
     e.average_decision_ms=average(e.decision_times)
