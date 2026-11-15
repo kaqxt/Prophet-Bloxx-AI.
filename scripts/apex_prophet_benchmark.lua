@@ -169,8 +169,10 @@ function Benchmark.format(report)
     local lines={"APEX x Prophet offline benchmark","scenarios="..tostring(report.scenario_count),
         "passed="..tostring(report.passed).." failed="..tostring(report.failed)}
     for _,result in ipairs(report.results or {}) do
-        lines[#lines+1]=string.format("%s | %d frames | %s | boost %.1f",
-            result.name,result.frames,result.last_mode,result.boost_remaining)
+        local episode=result.episode or {}
+        lines[#lines+1]=string.format("%s | %d frames | %s | score %+d | touches %d | boost %.1f",
+            result.name,result.frames,result.last_mode,episode.goal_difference or 0,
+            episode.touches or 0,result.boost_remaining)
     end
     for _,failure in ipairs(report.failures or {}) do
         lines[#lines+1]="FAIL "..tostring(failure.name)..": "..table.concat(failure.errors or {},", ")
