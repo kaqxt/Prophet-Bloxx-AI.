@@ -73,6 +73,35 @@ test("boost pad collects and respawns",function()
     truth(c.boost>0)
     truth(not sim.state.boost_pads[1].active)
 end)
+test("jump follows a gravity arc and lands",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="jumper",position={x=0,y=0,z=0},boost=0})
+    sim:step({jumper={jump=true}},1/60)
+    truth(not c.on_ground)
+    local initial_height=c.position.z
+    local reached_apex=false
+    for _=1,180 do
+        local previous_z=c.position.z
+        sim:step({},1/60)
+        if c.position.z<previous_z then reached_apex=true end
+        if c.on_ground then break end
+    end
+    truth(reached_apex,"jump never entered descent")
+    truth(c.on_ground,"jump did not land within three seconds")
+    truth(c.position.z==0)
+    truth(initial_height>0)
+end)
+test("ground dodge leaves the ground and lands",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="dodger",position={x=0,y=0,z=0},boost=0})
+    sim:step({dodger={dodge=true}},1/60)
+    truth(not c.on_ground,"dodge did not enter airborne state")
+    for _=1,180 do
+        sim:step({},1/60)
+        if c.on_ground then break end
+    end
+    truth(c.on_ground,"dodge did not land within three seconds")
+end)
 test("control adapter bounds values and smooths",function()
     local adapter=Adapter.new(Config)
     local a=adapter:normalize({steer=4,throttle=-4,boost=true},"c")
