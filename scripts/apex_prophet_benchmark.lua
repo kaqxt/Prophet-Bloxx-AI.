@@ -69,7 +69,7 @@ local function scoreFrame(evaluator,decision,car,ball,previous)
         position_error=d.ball_distance or 0,
         reward=(decision.mode=="GOAL_LINE_SAVE" and 2 or 0)
             +(decision.mode=="EMERGENCY_CLEAR" and 1.5 or 0)
-            +(decision.mode=="SHOT" and 1.2 or 0)
+            +(decision.mode=="SHOOT" and 1.2 or 0)
             -(decision.mode=="BOOST_ROUTE" and 0.1 or 0),
         own_goal_risks=d.goal_threat and 1 or 0,
         action_changes=previous and (previous.mode~=decision.mode and 1 or 0) or 0,
