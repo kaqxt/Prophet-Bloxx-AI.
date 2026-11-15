@@ -111,6 +111,8 @@ From the repository root, using Lua 5.1 or newer:
 ```sh
 lua scripts/apex_prophet_smoke_test.lua
 lua scripts/apex_prophet_integration_test.lua
+lua scripts/run_apex_prophet_benchmark.lua
+lua scripts/run_apex_prophet_tuning.lua
 ```
 
 The integration test runs the benchmark against synthetic states for a short simulated duration. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. The current environment used to author these changes did not have a Lua interpreter available, so these Lua tests are committed but have not been executed here. Do not treat synthetic pass counts as evidence of live-game performance.
