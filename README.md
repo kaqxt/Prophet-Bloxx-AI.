@@ -59,7 +59,7 @@ Run the Lua smoke tests from the repository root with a Lua 5.1+ interpreter:
 
     lua scripts/apex_prophet_smoke_test.lua
 
-These tests have been added but have **not** been executed in this environment. Treat the new extension as unvalidated until they pass and the planner is calibrated against a private simulator.
+GitHub Actions ran the six smoke tests and 15 integration/regression tests successfully on commit `0c247c20e011dbc117247c854f4bfbf973bd097d`. This validates the synthetic Lua stack only; it does not establish live-game compatibility or policy quality.
 
 ## Current limitations
 
@@ -115,7 +115,7 @@ lua scripts/run_apex_prophet_benchmark.lua
 lua scripts/run_apex_prophet_tuning.lua
 ```
 
-The integration test runs the benchmark against synthetic states for a short simulated duration. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. The current environment used to author these changes did not have a Lua interpreter available, so these Lua tests are committed but have not been executed here. Do not treat synthetic pass counts as evidence of live-game performance.
+The integration test runs the benchmark against synthetic states for a short simulated duration. The simulator is intentionally simplified and is **not** a faithful recreation of Bloxx League physics. GitHub Actions has successfully executed the smoke and integration tests. The Python controller also had a separate JSON serialization regression caused by a NumPy boolean; the policy now casts that field to a native Python `bool`, and a regression assertion was added. The controller tests were checked locally against the fetched source, but a fresh full Python CI result for the latest commit is not yet confirmed. Do not treat synthetic pass counts as evidence of live-game performance.
 
 ### Important coordinate and deployment notes
 
