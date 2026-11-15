@@ -26,6 +26,7 @@ def test_controller_outputs_normalized_controls():
     assert controls["jump"] in (0.0, 1.0)
     assert controls["boost"] in (0.0, 1.0)
     assert controls["handbrake"] in (0.0, 1.0)
+    assert type(result["plan"]["boost_recommended"]) is bool
     json.dumps(result, allow_nan=False)
 
 
