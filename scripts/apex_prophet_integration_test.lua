@@ -1,0 +1,288 @@
+-- Run from repository root: lua scripts/apex_prophet_integration_test.lua
+package.path="./scripts/?.lua;"..package.path
+local Config=require("apex_prophet_config")
+local Simulator=require("apex_prophet_simulator")
+local Scenarios=require("apex_prophet_scenarios")
+local Evaluator=require("apex_prophet_evaluator")
+local Adapter=require("apex_prophet_control_adapter")
+local Benchmark=require("apex_prophet_benchmark")
+local Tuner=require("apex_prophet_tuner")
+local Tactics=require("apex_prophet_tactical_extension")
+local DashboardAdapter=require("apex_prophet_dashboard_adapter")
+local tests,passed=0,0
+local function test(name,fn)
+    tests=tests+1
+    local ok,err=pcall(fn)
+    if not ok then error("FAIL "..name..": "..tostring(err),0) end
+    passed=passed+1
+    print("PASS "..name)
+end
+local function eq(a,b,msg) assert(a==b,(msg or "values differ")..": "..tostring(a).." ~= "..tostring(b)) end
+local function truth(v,msg) assert(v,msg or "expected true") end
+
+test("config validates defaults",function()
+    local ok,errors=Config.validate(Config)
+    truth(ok,table.concat(errors or {},","))
+end)
+test("config merge does not mutate defaults",function()
+    local merged=Config.merge(Config,{car={max_speed=44}})
+    eq(merged.car.max_speed,44)
+    truth(Config.car.max_speed~=44)
+end)
+test("config rejects non-finite values and invalid restitution",function()
+    local bad_dt=Config.merge(Config,{fixed_dt=math.huge})
+    local ok_dt=Config.validate(bad_dt)
+    truth(not ok_dt,"infinite timestep should be rejected")
+    local bad_bounce=Config.merge(Config,{field={floor_restitution=1.2}})
+    local ok_bounce=Config.validate(bad_bounce)
+    truth(not ok_bounce,"restitution above one should be rejected")
+    local bad_air=Config.merge(Config,{car={air_control=1.5}})
+    local ok_air=Config.validate(bad_air)
+    truth(not ok_air,"air control above one should be rejected")
+    local bad_gravity=Config.merge(Config,{ball={gravity=-1}})
+    local ok_gravity=Config.validate(bad_gravity)
+    truth(not ok_gravity,"negative gravity should be rejected")
+end)
+test("all scenarios validate and are uniquely named",function()
+    local names={}
+    local all=Scenarios.all()
+    truth(#all>=8)
+    for _,scenario in ipairs(all) do
+        local ok,errors=Scenarios.validate(scenario)
+        truth(ok,scenario.name..": "..table.concat(errors or {},","))
+        truth(not names[scenario.name],"duplicate scenario name")
+        names[scenario.name]=true
+    end
+end)
+test("scenario lookup returns known case",function()
+    eq(Scenarios.get("own_goal_emergency").name,"own_goal_emergency")
+    eq(Scenarios.get("not_a_case"),nil)
+end)
+test("mirroring flips positions and teams",function()
+    local original=Scenarios.fast_counterattack()
+    local mirrored=Scenarios.mirror(original)
+    eq(mirrored.cars[1].team,"orange")
+    eq(mirrored.ball.position.x,-original.ball.position.x)
+    truth(mirrored.name:find("_mirrored")~=nil)
+end)
+test("simulator advances ball deterministically",function()
+    local a=Simulator.new(Config,77)
+    local b=Simulator.new(Config,77)
+    a:set_ball({x=0,y=0,z=10},{x=4,y=0,z=0})
+    b:set_ball({x=0,y=0,z=10},{x=4,y=0,z=0})
+    for _=1,30 do a:step({},1/60); b:step({},1/60) end
+    eq(a.state.ball.position.x,b.state.ball.position.x)
+    eq(a.tick,30)
+end)
+test("car-ball contact transfers momentum and records last touch",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="striker",position={x=-3,y=0,z=0},
+        velocity={x=20,y=0,z=0},yaw=0,boost=0})
+    sim:set_ball({x=0,y=0,z=2.1},{x=0,y=0,z=0})
+    sim:step({},1/60)
+    truth(sim.state.ball.velocity.x>0,"car contact should move the ball forward")
+    eq(sim.state.match.last_touch,"striker")
+    local found=false
+    for _,event in ipairs(sim.events) do
+        if event.kind=="car_ball_touch" then found=true end
+    end
+    truth(found,"touch event should be recorded")
+end)
+test("simulator clamps invalid control magnitudes",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="test",position={x=0,y=0,z=0},yaw=0,boost=100})
+    sim:step({test={steer=99,throttle=99,boost=true}},1/60)
+    truth(math.abs(c.velocity.x)<=Config.car.boost_speed+0.001)
+    truth(c.boost<100)
+end)
+test("boost pad collects and respawns",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="test",position={x=0,y=0,z=0},boost=0})
+    sim:add_boost_pad({id="pad",position={x=0,y=0,z=0},amount=12,respawn=0.1})
+    sim:step({},1/60)
+    truth(c.boost>0)
+    truth(not sim.state.boost_pads[1].active)
+end)
+test("jump follows a gravity arc and lands",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="jumper",position={x=0,y=0,z=0},boost=0})
+    sim:step({jumper={jump=true}},1/60)
+    truth(not c.on_ground)
+    local initial_height=c.position.z
+    local reached_apex=false
+    for _=1,180 do
+        local previous_z=c.position.z
+        sim:step({},1/60)
+        if c.position.z<previous_z then reached_apex=true end
+        if c.on_ground then break end
+    end
+    truth(reached_apex,"jump never entered descent")
+    truth(c.on_ground,"jump did not land within three seconds")
+    truth(c.position.z==0)
+    truth(initial_height>0)
+end)
+test("ground dodge leaves the ground and lands",function()
+    local sim=Simulator.new(Config)
+    local c=sim:add_car({id="dodger",position={x=0,y=0,z=0},boost=0})
+    sim:step({dodger={dodge=true}},1/60)
+    truth(not c.on_ground,"dodge did not enter airborne state")
+    for _=1,180 do
+        sim:step({},1/60)
+        if c.on_ground then break end
+    end
+    truth(c.on_ground,"dodge did not land within three seconds")
+end)
+test("control adapter bounds values and smooths",function()
+    local adapter=Adapter.new(Config)
+    local a=adapter:normalize({steer=4,throttle=-4,boost=true},"c")
+    truth(a.steer<=1 and a.steer>=-1)
+    truth(a.throttle<=1 and a.throttle>=-1)
+    local b=adapter:normalize({steer=-1,throttle=1},"c")
+    truth(math.abs(b.steer-a.steer)<=Config.policy.max_steer_change+1e-9)
+    truth(math.abs(b.throttle-a.throttle)<=Config.policy.max_throttle_change+1e-9)
+end)
+test("control adapter rejects non-finite control values",function()
+    local adapter=Adapter.new(Config)
+    local action={steer=0/0,throttle=0,sequence=1}
+    local ok,errors=adapter:validate(action)
+    truth(not ok and #errors>0,"NaN steer should be rejected")
+    action.steer=math.huge
+    ok,errors=adapter:validate(action)
+    truth(not ok and #errors>0,"infinite steer should be rejected")
+end)
+test("control adapter blocks exhausted boost reserve",function()
+    local adapter=Adapter.new(Config)
+    local a=adapter:normalize({steer=0,throttle=1,boost=true,boost_reserve_ok=false},"c")
+    eq(a.boost,false)
+    eq(a.boost_block_reason,"reserve")
+end)
+test("control adapter exports and restores state",function()
+    local a=Adapter.new(Config)
+    a:normalize({steer=0.5,throttle=0.5},"c")
+    local state=a:export_state()
+    local b=Adapter.new(Config)
+    b:import_state(state)
+    eq(b.sequence,a.sequence)
+    eq(b.last.c.steer,a.last.c.steer)
+end)
+test("evaluator action sanity rejects non-finite values",function()
+    local ok,issues=Evaluator.action_sanity({steer=0/0,throttle=0})
+    truth(not ok and #issues>0,"NaN control should fail sanity check")
+end)
+test("evaluator calculates bounded rates",function()
+    local e=Evaluator.new()
+    e:start_episode({name="unit"})
+    e:observe({decision_ms=1,ball_distance=10,touches=1,shots=1,shots_on_target=1,intercepts=1})
+    local episode=e:finish_episode({duration=1,goals_for=2,goals_against=1})
+    eq(episode.goal_difference,1)
+    eq(episode.shot_accuracy,1)
+    local summary=e:summarize()
+    eq(summary.episodes,1)
+    eq(summary.win_rate,1)
+end)
+test("evaluator flags invalid metric ranges",function()
+    local ok,issues=Evaluator.validate_metrics({win_rate=2})
+    truth(not ok and #issues>0)
+end)
+test("bootstrap mean is deterministic and rejects empty samples",function()
+    local a=Evaluator.bootstrap_mean({1,2,3,4},100,42)
+    local b=Evaluator.bootstrap_mean({1,2,3,4},100,42)
+    eq(a.mean,b.mean)
+    eq(a.low,b.low)
+    eq(a.high,b.high)
+    local ok=pcall(function() Evaluator.bootstrap_mean({},20,42) end)
+    truth(not ok,"empty bootstrap sample should be rejected")
+end)
+test("dashboard adapter maps policy outputs to display schema",function()
+    local decision={
+        tick=4,mode="INTERCEPT",target={x=1,y=2,z=3},
+        intercept={position={x=4,y=5,z=6},time=0.4},
+        diagnostics={ball_distance=30,steering_angle=math.pi/2,car_speed=25},
+        controls={throttle=0.7,steer=1,boost=true,jump=false,handbrake=false,dodge=true}
+    }
+    local view=DashboardAdapter.format(decision,{boost=55},9)
+    eq(view.tick,9)
+    eq(view.mode,"INTERCEPT")
+    eq(view.travel_time,0.4)
+    eq(view.controls.boost,1)
+    eq(view.controls.dodge,1)
+    eq(view.controls.jump,0)
+    eq(view.diagnostics.physics_validated,false)
+    local err=DashboardAdapter.error("sample failure",10)
+    eq(err.connected,false)
+    eq(err.mode,"ERROR")
+end)
+test("steering sign points toward a lateral target",function()
+    local s={
+        car_position={x=0,y=2,z=0},car_velocity={x=0,y=0,z=0},
+        car_forward={x=0,y=0,z=1},car_up={x=0,y=1,z=0},
+        ball_position={x=50,y=2,z=0},ball_velocity={x=0,y=0,z=0},
+        own_goal={x=0,y=0,z=220},opponent_goal={x=0,y=0,z=-220},
+        boost=50,dt=1/60,grounded=true,jump_available=true,dodge_available=true,
+        teammates={},opponents={}
+    }
+    local decision=Tactics.new():step(s)
+    eq(decision.mode,"INTERCEPT")
+    truth(decision.controls.steer>0,"positive-x target should request positive steering")
+end)
+test("aligned ground intercept can recommend a dodge",function()
+    local s={
+        car_position={x=0,y=2,z=35},car_velocity={x=0,y=0,z=-20},
+        car_forward={x=0,y=0,z=-1},car_up={x=0,y=1,z=0},
+        ball_position={x=0,y=2,z=0},ball_velocity={x=0,y=0,z=0},
+        own_goal={x=0,y=0,z=220},opponent_goal={x=0,y=0,z=-220},
+        boost=50,dt=1/60,grounded=true,jump_available=true,dodge_available=true,
+        teammates={},opponents={}
+    }
+    local decision=Tactics.new():step(s)
+    eq(decision.mode,"INTERCEPT")
+    eq(decision.controls.dodge,true)
+end)
+test("aerial bias changes borderline aerial decisions",function()
+    local s={
+        car_position={x=0,y=2,z=20},car_velocity={x=0,y=0,z=-10},
+        car_forward={x=0,y=0,z=-1},car_up={x=0,y=1,z=0},
+        ball_position={x=10,y=14,z=0},ball_velocity={x=0,y=0,z=-3},
+        own_goal={x=0,y=0,z=220},opponent_goal={x=0,y=0,z=-220},
+        boost=80,dt=1/60,grounded=true,jump_available=true,dodge_available=true,
+        teammates={},opponents={}
+    }
+    local conservative=Tactics.new({aerial_bias=0.3}):step(s)
+    local aggressive=Tactics.new({aerial_bias=0.8}):step(s)
+    truth(conservative.mode~="AERIAL_INTERCEPT","low aerial bias should reject borderline aerial")
+    eq(aggressive.mode,"AERIAL_INTERCEPT")
+end)
+test("benchmark runs all synthetic scenarios",function()
+    local report=Benchmark.run({duration=0.12})
+    truth(report.passed>=8,"too few scenarios passed: "..tostring(report.passed))
+    eq(report.failed,0)
+    truth(report.summary.episodes>=8)
+    truth(type(Benchmark.format(report))=="string")
+end)
+test("benchmark reports goals scored by the controlled team",function()
+    local scenario={
+        name="blue_goal_scoring",
+        ball={position={x=95,y=0,z=3},velocity={x=50,y=0,z=0}},
+        cars={{id="blue_test",team="blue",position={x=0,y=40,z=0},
+            velocity={x=0,y=0,z=0},yaw=0,boost=0,on_ground=true}},
+        boost_pads={},metadata={tags={"goal"},expected={}}
+    }
+    local report=Benchmark.run({duration=0.5,scenarios={scenario},team="blue"})
+    eq(report.failed,0)
+    eq(report.results[1].episode.goal_difference,1)
+    eq(report.results[1].episode.goals_for,1)
+    eq(report.results[1].episode.goals_against,0)
+    eq(report.summary.goal_difference,1)
+    truth(Benchmark.format(report):find("score +1",1,true)~=nil,
+        "formatted report should include score")
+end)
+test("tuner validates candidates and ranks a short sweep",function()
+    local candidates=Tuner.default_candidates()
+    local ok,errors=Tuner.validate_candidates(candidates)
+    truth(ok,table.concat(errors or {},","))
+    local result=Tuner.run({duration=0.05,scenarios={Scenarios.kickoff()},max_trials=2})
+    eq(result.tested,2)
+    truth(result.best~=nil)
+    truth(type(Tuner.format(result))=="string")
+end)
+print(string.format("%d/%d integration tests passed",passed,tests))
