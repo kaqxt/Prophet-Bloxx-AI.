@@ -1,12 +1,14 @@
 # Prophet Bloxx AI
 
-An experimental car-soccer AI research project.
+An experimental offline car-soccer AI research project for adapting general learning methods to Bloxx League. This project does not connect to or automate a live game client.
 
-## Features
-- Ball trajectory prediction
-- Intercept planning
-- Offensive and defensive decisions
-- Unit tests for prediction and policy logic
+## Current components
+- Ball trajectory prediction with configurable floor bounce, drag, and optional field bounds (`prophet/trajectory.py`)
+- Physics calibration from recorded position samples and bounce velocities (`prophet/calibration.py`)
+- Prediction and trial evaluation metrics (`prophet/evaluation.py`)
+- A lightweight imitation-learning classifier for labeled observations (`prophet/imitation.py`)
+- Heuristic intercept and offense/defense decisions (`prophet/policy.py`)
+- Unit tests for prediction, calibration, evaluation, and imitation learning
 
 ## Setup
 
@@ -19,16 +21,16 @@ Activate the virtual environment, then run:
     pip install -r requirements.txt
     python -m pytest
 
-## Current limitations
+## Training approach
 
-The physics model is provisional.
-The policy is heuristic, not a trained Prophet model.
-No live-game connection is included.
+The recommended progression is: calibrate the target game's physics; measure ball-prediction errors; build labeled action examples; train and compare an imitation baseline; then consider PPO/self-play only after a realistic local simulator exists. See [docs/LEARNING_PIPELINE.md](docs/LEARNING_PIPELINE.md).
 
-## Next milestones
+The design borrows training concepts from public projects such as [Necto/Nexto](https://github.com/Rolv-Arild/Necto), [replay-pretraining](https://github.com/Rolv-Arild/replay-pretraining), and [flyguy](https://github.com/adventure-gpt/flyguy). Their Rocket League physics, weights, and action spaces are not drop-in replacements for Bloxx League.
 
-1. Calibrate the physics model.
-2. Collect permitted game-state observations.
-3. Build a realistic simulator.
-4. Train and evaluate a neural policy.
-5. Compare predictions against recorded outcomes.
+## Limitations
+
+- Physics parameters are provisional until calibrated from authorized observations.
+- The heuristic policy is not a trained Prophet model.
+- The imitation classifier needs representative labeled data and a documented feature order.
+- No live-game connection, executor integration, or trained reinforcement-learning model is included.
+- The internal architecture of Prophet itself is not publicly verified here.
